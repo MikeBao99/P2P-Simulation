@@ -99,7 +99,7 @@ class ArmlB1Std(Peer):
             self.dummy_state["cake"] = "pie"
             uploaders = []
             blocks_up = []
-            for up in history.downloads[round]:
+            for up in history.downloads[round - 1]:
                 from_ = up.from_id
                 blocks = up.blocks
                 if from_ not in uploaders:
@@ -107,9 +107,10 @@ class ArmlB1Std(Peer):
                     blocks_up.append(blocks)
                 else:
                     blocks_up[uploaders.index(from_)] += blocks
-            chosen = [x for _,x in sorted(zip(blocks_up, uploaders))][:3]
-            # request = random.choice(requests)
-            # chosen = [request.requester_id]
+            chosen = [x for _,x in sorted(zip(blocks_up, uploaders))][-3:]
+            request = random.choice(requests)
+            chosen.append(request.requester_id)
+            chosen = list(set(chosen))
             # Evenly "split" my upload bandwidth among the one chosen requester
             bws = even_split(self.up_bw, len(chosen))
 

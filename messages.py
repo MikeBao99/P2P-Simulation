@@ -37,7 +37,7 @@ class Download:
 
 
 
-            
+
 class PeerInfo:
     """
     Only passing peer ids and the pieces they have available to each agent.
