@@ -105,8 +105,14 @@ class ArmlB1Tyrant(Peer):
             # change my internal state for no reason
             self.dummy_state["cake"] = "pie"
             unchoked = set([x.to_id for x in history.uploads[round - 1]])
-            unchoked1 = set([x.to_id for x in history.uploads[round - 2]])
-            unchoked2 = set([x.to_id for x in history.uploads[round - 3]])
+            if round - 2 >= 0:
+                unchoked1 = set([x.to_id for x in history.uploads[round - 2]])
+            else:
+                unchoked1 = []
+            if round - 3 >= 0:
+                unchoked2 = set([x.to_id for x in history.uploads[round - 3]])
+            else:
+                unchoked2 = []
             ups = set([x.from_id for x in history.downloads[round - 1]])
             for unc in unchoked:
                 indx = name.index(unc)
