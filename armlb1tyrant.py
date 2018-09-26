@@ -127,20 +127,20 @@ class ArmlB1Tyrant(Peer):
                 if unc in unchoked and unc in unchoked1 and unc in unchoked2:
                     t[indx] *= (1 - gamma)
             up_bw = self.up_bw
-            rat = [x/y for (x,y) in zip(f, t)]
+            rat = [float(x)/y for (x,y) in zip(f, t)]
             rat = sorted(range(len(f)), key= lambda s: rat[s])
             rat = rat[::-1]
             i = 0
             chosen = []
-            while up_bw > 0 and i < len(rat):
+            bws = []
+            while i < len(rat) and up_bw >= t[i]:
                 chosen.append(name[i])
+                bws.append(t[i])
                 up_bw -= t[i]
                 i += 1
-            chosen = list(set(chosen))
             # request = random.choice(requests)
             # chosen = [request.requester_id]
             # Evenly "split" my upload bandwidth among the one chosen requester
-            bws = even_split(self.up_bw, len(chosen))
 
         # create actual uploads out of the list of peer ids and bandwidths
         uploads = [Upload(self.id, peer_id, bw)
