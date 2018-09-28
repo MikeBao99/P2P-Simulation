@@ -28,6 +28,7 @@ class ArmlB1PropShare(Peer):
 
         This will be called after update_pieces() with the most recent state.
         """
+        nabla = 0.8
         needed = lambda i: self.pieces[i] < self.conf.blocks_per_piece
         needed_pieces = filter(needed, range(len(self.pieces)))
         np_set = set(needed_pieces)  # sets support fast intersection ops.
@@ -47,7 +48,20 @@ class ArmlB1PropShare(Peer):
         requests = []   # We'll put all the things we want here
         # Symmetry breaking is good...
         random.shuffle(needed_pieces)
-
+        pieces_list = []
+        pieces_freq = []
+        for peer in peers:
+            for avp in peer.available_pieces:
+                if avp in pieces_list:
+                    pieces_freq[pieces_list.index(avp)] += 1
+                else:
+                    pieces_list.append(avp)
+                    pieces_freq.append(1)
+        pieces_list1 = sorted(pieces_list, key=lambda x: pieces_freq[pieces_list.index(x)])
+        pieces_list_sorted = []
+        for p in pieces_list1:
+            if p in needed_pieces:
+                pieces_list_sorted.append(p)
         # Sort peers by id.  This is probably not a useful sort, but other
         # sorts might be useful
         peers.sort(key=lambda p: p.id)
@@ -57,17 +71,30 @@ class ArmlB1PropShare(Peer):
             av_set = set(peer.available_pieces)
             isect = av_set.intersection(np_set)
             n = min(self.max_requests, len(isect))
+            desired = n
             # More symmetry breaking -- ask for random pieces.
             # This would be the place to try fancier piece-requesting strategies
             # to avoid getting the same thing from multiple peers at a time.
-            for piece_id in random.sample(isect, n):
-                # aha! The peer has this piece! Request it.
-                # which part of the piece do we need next?
-                # (must get the next-needed blocks in order)
-                start_block = self.pieces[piece_id]
-                r = Request(self.id, peer.id, piece_id, start_block)
-                requests.append(r)
-
+            if n == len(isect):
+                for piece in isect:
+                    start_block = self.pieces[piece]
+                    r = Request(self.id, peer.id, piece, start_block)
+                    requests.append(r)
+            else:
+                rarity = []
+                for piece in isect:
+                    rarity.append((piece, pieces_freq[pieces_list.index(piece)]))
+                random.shuffle(rarity)
+                rarity.sort(key=lambda x: x[1])
+                req_pieces = [x[0] for x in rarity[:n]]
+                for piece in req_pieces:
+                    start_block = self.pieces[piece]
+                    r = Request(self.id, peer.id, piece, start_block)
+                    requests.append(r)
+            # for piece_id in random.sample(isect, n):
+            #     start_block = self.pieces[piece_id]
+            #     r = Request(self.id, peer.id, piece_id, start_block)
+            #     requests.append(r)
         return requests
 
     def uploads(self, requests, peers, history):
