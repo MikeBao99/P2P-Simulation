@@ -110,13 +110,13 @@ class ArmlB1Tourney(Peer):
         gamma = 0.04
         r = 3
         alpha = 0.2
-        # unchoke three agents every round
+        # expect four unchokes in first round
         k = 4
         random.shuffle(peers)
         random.shuffle(requests)
         name = [p.id for p in peers]
         f = [((self.conf.max_up_bw + self.conf.min_up_bw) / 2.0 ) / k] * len(peers)
-        t = [((self.conf.max_up_bw + self.conf.min_up_bw) / 2.0 ) / (len(peers) - 1)] * len(peers)
+        t = [((self.conf.max_up_bw + self.conf.min_up_bw) / 2.0 ) / len(peers)] * len(peers)
         round = history.current_round()
         logging.debug("%s again.  It's round %d." % (
             self.id, round))
