@@ -1,11 +1,5 @@
 #!/usr/bin/python
 
-# This is a dummy peer that just illustrates the available information your peers
-# have available.
-
-# You'll want to copy this file to AgentNameXXX.py for various versions of XXX,
-# probably get rid of the silly logging messages, and then add more logic.
-
 import random
 import logging
 
@@ -17,7 +11,6 @@ class ArmlB1Std(Peer):
     def post_init(self):
         print "post_init(): %s here!" % self.id
         self.dummy_state = dict()
-        self.dummy_state["cake"] = "lie"
 
     def requests(self, peers, history):
         """
@@ -28,22 +21,9 @@ class ArmlB1Std(Peer):
 
         This will be called after update_pieces() with the most recent state.
         """
-        nabla = 0.8
         needed = lambda i: self.pieces[i] < self.conf.blocks_per_piece
         needed_pieces = filter(needed, range(len(self.pieces)))
         np_set = set(needed_pieces)  # sets support fast intersection ops.
-
-
-        logging.debug("%s here: still need pieces %s" % (
-            self.id, needed_pieces))
-
-        logging.debug("%s still here. Here are some peers:" % self.id)
-        for p in peers:
-            logging.debug("id: %s, available pieces: %s" % (p.id, p.available_pieces))
-
-        logging.debug("And look, I have my entire history available too:")
-        logging.debug("look at the AgentHistory class in history.py for details")
-        logging.debug(str(history))
 
         requests = []   # We'll put all the things we want here
         # Symmetry breaking is good...
@@ -62,8 +42,7 @@ class ArmlB1Std(Peer):
         for p in pieces_list1:
             if p in needed_pieces:
                 pieces_list_sorted.append(p)
-        # Sort peers by id.  This is probably not a useful sort, but other
-        # sorts might be useful
+
         peers.sort(key=lambda p: p.id)
         # request all available pieces from all peers!
         # (up to self.max_requests from each)
@@ -91,10 +70,6 @@ class ArmlB1Std(Peer):
                     start_block = self.pieces[piece]
                     r = Request(self.id, peer.id, piece, start_block)
                     requests.append(r)
-            # for piece_id in random.sample(isect, n):
-            #     start_block = self.pieces[piece_id]
-            #     r = Request(self.id, peer.id, piece_id, start_block)
-            #     requests.append(r)
         return requests
 
     def uploads(self, requests, peers, history):
@@ -109,21 +84,11 @@ class ArmlB1Std(Peer):
         """
         random.shuffle(peers)
         round = history.current_round()
-        logging.debug("%s again.  It's round %d." % (
-            self.id, round))
-        # One could look at other stuff in the history too here.
-        # For example, history.downloads[round-1] (if round != 0, of course)
-        # has a list of Download objects for each Download to this peer in
-        # the previous round.
 
         if len(requests) == 0:
-            logging.debug("No one wants my pieces!")
             chosen = []
             bws = []
         else:
-            logging.debug("Still here: uploading to a random peer")
-            # change my internal state for no reason
-            self.dummy_state["cake"] = "pie"
             uploaders = []
             blocks_up = []
             for up in history.downloads[round - 1]:

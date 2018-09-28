@@ -1,11 +1,5 @@
 #!/usr/bin/python
 
-# This is a dummy peer that just illustrates the available information your peers
-# have available.
-
-# You'll want to copy this file to AgentNameXXX.py for various versions of XXX,
-# probably get rid of the silly logging messages, and then add more logic.
-
 import random
 import logging
 
@@ -17,7 +11,6 @@ class ArmlB1Tyrant(Peer):
     def post_init(self):
         print "post_init(): %s here!" % self.id
         self.dummy_state = dict()
-        self.dummy_state["cake"] = "lie"
 
     def requests(self, peers, history):
         """
@@ -28,24 +21,11 @@ class ArmlB1Tyrant(Peer):
 
         This will be called after update_pieces() with the most recent state.
         """
-        nabla = 0.8
         needed = lambda i: self.pieces[i] < self.conf.blocks_per_piece
         needed_pieces = filter(needed, range(len(self.pieces)))
         np_set = set(needed_pieces)  # sets support fast intersection ops.
 
-
-        logging.debug("%s here: still need pieces %s" % (
-            self.id, needed_pieces))
-
-        logging.debug("%s still here. Here are some peers:" % self.id)
-        for p in peers:
-            logging.debug("id: %s, available pieces: %s" % (p.id, p.available_pieces))
-
-        logging.debug("And look, I have my entire history available too:")
-        logging.debug("look at the AgentHistory class in history.py for details")
-        logging.debug(str(history))
-
-        requests = []   # We'll put all the things we want here
+        requests = []
         # Symmetry breaking is good...
         random.shuffle(needed_pieces)
         pieces_list = []
@@ -91,10 +71,6 @@ class ArmlB1Tyrant(Peer):
                     start_block = self.pieces[piece]
                     r = Request(self.id, peer.id, piece, start_block)
                     requests.append(r)
-            # for piece_id in random.sample(isect, n):
-            #     start_block = self.pieces[piece_id]
-            #     r = Request(self.id, peer.id, piece_id, start_block)
-            #     requests.append(r)
         return requests
 
     def uploads(self, requests, peers, history):
@@ -125,13 +101,9 @@ class ArmlB1Tyrant(Peer):
         # has a list of Download objects for each Download to this peer in
         # the previous round.
         if len(requests) == 0:
-            logging.debug("No one wants my pieces!")
             chosen = []
             bws = []
         else:
-            logging.debug("Still here: uploading to a random peer")
-            # change my internal state for no reason
-            self.dummy_state["cake"] = "pie"
             unchoked = set([x.to_id for x in history.uploads[round - 1]])
             if round - 2 >= 0:
                 unchoked1 = set([x.to_id for x in history.uploads[round - 2]])
@@ -158,7 +130,6 @@ class ArmlB1Tyrant(Peer):
             rat = [float(x)/y for (x,y) in zip(f, t)]
             rat = sorted(range(len(f)), key= lambda s: rat[s])
             rat = rat[::-1]
-            # print(rat)
             i = 0
             chosen = []
             bws = []
@@ -169,15 +140,8 @@ class ArmlB1Tyrant(Peer):
                     bws.append(t[i])
                     up_bw -= t[i]
                 i += 1
-            # request = random.choice(requests)
-            # chosen.append(request.requester_id)
-            # bws.append(self.up_bw - sum(bws))
-            # request = random.choice(requests)
-            # chosen = [request.requester_id]
-            # Evenly "split" my upload bandwidth among the one chosen requester
 
         # create actual uploads out of the list of peer ids and bandwidths
         uploads = [Upload(self.id, peer_id, bw)
                    for (peer_id, bw) in zip(chosen, bws)]
-        # print(t)
         return uploads
