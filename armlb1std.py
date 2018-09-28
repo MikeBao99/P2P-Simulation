@@ -80,7 +80,7 @@ class ArmlB1Std(Peer):
 
         In each round, this will be called after requests().
         """
-
+        random.shuffle(peers)
         round = history.current_round()
         logging.debug("%s again.  It's round %d." % (
             self.id, round))
@@ -107,7 +107,8 @@ class ArmlB1Std(Peer):
                     blocks_up.append(blocks)
                 else:
                     blocks_up[uploaders.index(from_)] += blocks
-            chosen = [x for _,x in sorted(zip(blocks_up, uploaders))][-3:]
+            requesters = [x.requester_id for x in requests]
+            chosen = [x for _,x in sorted(zip(blocks_up, uploaders)) if x in requesters][-3:]
             request = random.choice(requests)
             chosen.append(request.requester_id)
             chosen = list(set(chosen))

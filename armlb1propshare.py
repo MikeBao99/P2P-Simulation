@@ -80,7 +80,7 @@ class ArmlB1PropShare(Peer):
 
         In each round, this will be called after requests().
         """
-
+        random.shuffle(peers)
         round = history.current_round()
         logging.debug("%s again.  It's round %d." % (
             self.id, round))
@@ -99,11 +99,12 @@ class ArmlB1PropShare(Peer):
             self.dummy_state["cake"] = "pie"
             blocks_up = []
             names = []
+            requesters = [x.requester_id for x in requests]
             for up in history.downloads[round - 1]:
-                if up.from_id not in names:
+                if up.from_id not in names and up.from_id in requesters:
                     names.append(up.from_id)
                     blocks_up.append(up.blocks)
-                else:
+                elif up.from_id in requests:
                     blocks_up[names.index(up.from_id)] += up.blocks
             blocks_tot = sum(blocks_up)
             chosen = []
@@ -112,6 +113,7 @@ class ArmlB1PropShare(Peer):
                 if p.id in names:
                     chosen.append(p.id)
                     bws.append(int(0.9 * self.up_bw * blocks_up[names.index(p.id)]/blocks_tot))
+            random.shuffle(peers)
             for p in peers:
                 if p.id not in names:
                     chosen.append(p.id)

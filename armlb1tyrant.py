@@ -85,9 +85,10 @@ class ArmlB1Tyrant(Peer):
         alpha = 0.20
         # unchoke three agents every round
         k = 3
+        random.shuffle(peers)
         name = [p.id for p in peers]
         f = [((self.conf.max_up_bw + self.conf.min_up_bw) / 2.0 ) / len(peers)] * len(peers)
-        t = [((self.conf.max_up_bw + self.conf.min_up_bw) / 2.0 ) / len(peers)] * len(peers)
+        t = [((self.conf.max_up_bw + self.conf.min_up_bw) / 2.0 ) / 3] * len(peers)
         round = history.current_round()
         logging.debug("%s again.  It's round %d." % (
             self.id, round))
@@ -95,7 +96,6 @@ class ArmlB1Tyrant(Peer):
         # For example, history.downloads[round-1] (if round != 0, of course)
         # has a list of Download objects for each Download to this peer in
         # the previous round.
-
         if len(requests) == 0:
             logging.debug("No one wants my pieces!")
             chosen = []
@@ -122,7 +122,7 @@ class ArmlB1Tyrant(Peer):
                     rate = 0
                     for x in history.downloads[round - 1]:
                         if x.to_id == unc:
-                            rate = x.blocks
+                            rate += x.blocks
                     f[indx] = rate
                 if unc in unchoked and unc in unchoked1 and unc in unchoked2:
                     t[indx] *= (1 - gamma)
@@ -130,14 +130,20 @@ class ArmlB1Tyrant(Peer):
             rat = [float(x)/y for (x,y) in zip(f, t)]
             rat = sorted(range(len(f)), key= lambda s: rat[s])
             rat = rat[::-1]
+            # print(rat)
             i = 0
             chosen = []
             bws = []
+            requesters = [x.requester_id for x in requests]
             while i < len(rat) and up_bw >= t[i]:
-                chosen.append(name[i])
-                bws.append(t[i])
-                up_bw -= t[i]
+                if name[i] in requesters:
+                    chosen.append(name[i])
+                    bws.append(t[i])
+                    up_bw -= t[i]
                 i += 1
+            # request = random.choice(requests)
+            # chosen.append(request.requester_id)
+            # bws.append(self.up_bw - sum(bws))
             # request = random.choice(requests)
             # chosen = [request.requester_id]
             # Evenly "split" my upload bandwidth among the one chosen requester
@@ -145,5 +151,5 @@ class ArmlB1Tyrant(Peer):
         # create actual uploads out of the list of peer ids and bandwidths
         uploads = [Upload(self.id, peer_id, bw)
                    for (peer_id, bw) in zip(chosen, bws)]
-
+        # print(t)
         return uploads
